@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2021 Junde Yhi <junde@yhi.moe>
+# SPDX-License-Identifier: CC0-1.0
+
+PROJECT_NAME = "TinyWoT Simple HTTP Protocol Binding"
+PROJECT_NUMBER = "0.1.0"
+PROJECT_BRIEF = "A HTTP protocol binding implementation for TinyWoT."
+OUTPUT_DIRECTORY = docs
+TAB_SIZE = 2
+OPTIMIZE_OUTPUT_FOR_C = YES
+INPUT = README.md include include/tinywot-http-simple
+USE_MDFILE_AS_MAINPAGE = README.md
+
+# Turn this on (YES) for private API documentation
+INTERNAL_DOCS = NO
