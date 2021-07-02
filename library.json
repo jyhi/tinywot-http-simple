@@ -1,0 +1,32 @@
+{
+  "name": "tinywot-http-simple",
+  "version": "0.1.0",
+  "description": "A simple HTTP protocol binding implementation for TinyWoT.",
+  "keywords": [
+    "web of things"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lmy441900/tinywot-http-simple"
+  },
+  "authors": [
+    {
+      "name": "Junde Yhi",
+      "email": "junde@yhi.moe",
+      "url": "https://www.yhi.moe",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://www.yhi.moe/projects#tinywot",
+  "examples": [],
+  "dependencies": [
+    {
+      "name": "tinywot",
+      "version": "0.2.0"
+    }
+  ],
+  "build": {
+    "flags": ["-Iinclude/tinywot-http-simple/"]
+  }
+}
