@@ -17,6 +17,21 @@
 
 #include "tinywot-http-simple.h"
 
+#if defined(__AVR_ARCH__) && defined(TINYWOT_HTTP_SIMPLE_USE_PROGMEM)
+#include <avr/pgmspace.h>
+#define _PROGMEM PROGMEM
+#define _PSTR PSTR
+#define _strncmp strncmp_P
+#define _strspn strspn_P
+#define _snprintf snprintf_P
+#else
+#define _PROGMEM
+#define _PSTR
+#define _strncmp strncmp
+#define _strspn strspn
+#define _snprintf snprintf
+#endif
+
 //////////////////// Private Data ////////////////////
 
 #ifdef TINYWOT_HTTP_SIMPLE_USE_REASON_PHRASE
@@ -35,27 +50,28 @@
 #define HTTP_REASON_PHRASE_NOT_IMPLEMENTED ""
 #endif
 
-static const char crlf[] = "\r\n";
+static const char crlf[] _PROGMEM = "\r\n";
 
-static const char ok[] = "HTTP/1.1 200 " HTTP_REASON_PHRASE_OK "\r\n";
-static const char bad_request[] =
+static const char ok[] _PROGMEM = "HTTP/1.1 200 " HTTP_REASON_PHRASE_OK "\r\n";
+static const char bad_request[] _PROGMEM =
   "HTTP/1.1 400 " HTTP_REASON_PHRASE_BAD_REQUEST "\r\n";
-static const char not_found[] =
+static const char not_found[] _PROGMEM =
   "HTTP/1.1 404 " HTTP_REASON_PHRASE_NOT_FOUND "\r\n";
-static const char method_not_allowed[] =
+static const char method_not_allowed[] _PROGMEM =
   "HTTP/1.1 405 " HTTP_REASON_PHRASE_METHOD_NOT_ALLOWED "\r\n";
-static const char internal_server_error[] =
+static const char internal_server_error[] _PROGMEM =
   "HTTP/1.1 500 " HTTP_REASON_PHRASE_INTERNAL_SERVER_ERROR "\r\n";
-static const char not_implemented[] =
+static const char not_implemented[] _PROGMEM =
   "HTTP/1.1 501 " HTTP_REASON_PHRASE_NOT_IMPLEMENTED "\r\n";
 
-static const char str_content_type[] = "Content-Type: ";
-static const char str_content_length[] = "Content-Length: ";
+static const char str_content_type[] _PROGMEM = "Content-Type: ";
+static const char str_content_length[] _PROGMEM = "Content-Length: ";
 
-static const char text_plain[] = "text/plain\r\n";
-static const char application_octet_stream[] = "application/octet-stream\r\n";
-static const char application_json[] = "application/json\r\n";
-static const char application_td_json[] = "application/td+json\r\n";
+static const char text_plain[] _PROGMEM = "text/plain\r\n";
+static const char application_octet_stream[] _PROGMEM =
+  "application/octet-stream\r\n";
+static const char application_json[] _PROGMEM = "application/json\r\n";
+static const char application_td_json[] _PROGMEM = "application/td+json\r\n";
 
 //////////////////// Private APIs ////////////////////
 
@@ -74,18 +90,29 @@ static const char application_td_json[] = "application/td+json\r\n";
  * \internal
  * \brief Test up to `count` bytes if two strings are case-insensitively equal.
  *
+ * Note that when `TINYWOT_HTTP_SIMPLE_USE_PROGMEM` is defined, this function
+ * automatically uses AVR program space functions, in the case of which `s2`
+ * must be a pointer to the program space.
+ *
  * \param[in] s1 A string.
- * \param[in] s2 Another string.
+ * \param[in] s2 Another string. When `TINYWOT_HTTP_SIMPLE_USE_PROGMEM` is
+ * defined, this must be a string pointing to the flash.
  * \param[in] count Up to how many bytes to compare.
  * \return non-zero if `s1[:count] == s2[:count]`, otherwise 0.
  */
-static int strinequ(const char *s1, const char *s2, size_t count) {
+static int _strinequ(const char *s1, const char *s2, size_t count) {
   for (;; ++s1, ++s2, --count) {
-    if (!count || (!*s1 && !*s2)) {
+#if defined(__AVR_ARCH__) && defined(TINYWOT_HTTP_SIMPLE_USE_PROGMEM)
+    char c2 = pgm_read_byte(s2);
+#else
+    char c2 = *s2;
+#endif
+
+    if (!count || (!*s1 && !c2)) {
       return 1;
     }
 
-    if (tolower(*s1) != tolower(*s2)) {
+    if (tolower(*s1) != tolower(c2)) {
       return 0;
     }
   }
@@ -129,11 +156,11 @@ static int tinywot_http_simple_extract_request_line(const char *linebuf,
   }
   cursor_range = cursor_end - cursor_start;
 
-  if (strncmp("GET", cursor_start, cursor_range) == 0) {
+  if (_strncmp(cursor_start, _PSTR("GET"), cursor_range) == 0) {
     request->op = WOT_OPERATION_TYPE_READ_PROPERTY;
-  } else if (strncmp("PUT", cursor_start, cursor_range) == 0) {
+  } else if (_strncmp(cursor_start, _PSTR("PUT"), cursor_range) == 0) {
     request->op = WOT_OPERATION_TYPE_WRITE_PROPERTY;
-  } else if (strncmp("POST", cursor_start, cursor_range) == 0) {
+  } else if (_strncmp(cursor_start, _PSTR("POST"), cursor_range) == 0) {
     request->op = WOT_OPERATION_TYPE_INVOKE_ACTION;
   } else {
     return 0;
@@ -158,7 +185,7 @@ static int tinywot_http_simple_extract_request_line(const char *linebuf,
 
   // Version (but only an assertion on the format)
 
-  if (strncmp("HTTP/", cursor_start, 5) != 0)
+  if (_strncmp(cursor_start, _PSTR("HTTP/"), 5) != 0)
     return 0;
   cursor_end = strchr(cursor_start, '\r');
   if (!cursor_end)
@@ -206,7 +233,7 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
 
   // If the current line consists (starts with, even) only CR and LF then we
   // indicate the over of HTTP header fields.
-  if (strncmp("\r\n", linebuf, 2) == 0) {
+  if (_strncmp(linebuf, "\r\n", 2) == 0) {
     return 0;
   }
 
@@ -226,26 +253,28 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
   }
 
   // Trim any optional whitespace around the value
-  value_start += strspn(value_start, " \t");
+  value_start += _strspn(value_start, _PSTR(" \t"));
   while (*(value_end - 1) == ' ' || *(value_end - 1) == '\t') {
     value_end -= 1;
   }
   value_length = value_end - value_start;
 
-  if (strinequ("content-type", key_start, key_length)) {
-    if (strinequ("text/plain", value_start, value_length)) {
+  if (_strinequ(key_start, _PSTR("content-type"), key_length)) {
+    if (_strinequ(value_start, _PSTR("text/plain"), value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_TEXT_PLAIN;
-    } else if (strinequ("application/octet-stream", value_start,
-                        value_length)) {
+    } else if (_strinequ(value_start, _PSTR("application/octet-stream"),
+                         value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_OCTET_STREAM;
-    } else if (strinequ("application/json", value_start, value_length)) {
+    } else if (_strinequ(value_start, _PSTR("application/json"),
+                         value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_JSON;
-    } else if (strinequ("application/td+json", value_start, value_length)) {
+    } else if (_strinequ(value_start, _PSTR("application/td+json"),
+                         value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_TD_JSON;
     } else {
       request->content_type = TINYWOT_CONTENT_TYPE_UNKNOWN;
     }
-  } else if (strinequ("content-length", key_start, key_length)) {
+  } else if (_strinequ(key_start, _PSTR("content-length"), key_length)) {
     unsigned long val = strtoul(value_start, NULL, 10);
     if (errno == ERANGE) {
       return -1;
@@ -367,8 +396,8 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   }
 
   // Content-Length
-  int nbytes = snprintf(config->linebuf, config->linebuf_size, "%u",
-                        response->content_length);
+  int nbytes = _snprintf(config->linebuf, config->linebuf_size, _PSTR("%u"),
+                         response->content_length);
   RETURN_IF_FAIL(
     config->write(str_content_length, sizeof(str_content_length), config->ctx));
   RETURN_IF_FAIL(config->write(config->linebuf, (size_t)nbytes, config->ctx));
