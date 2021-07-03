@@ -382,13 +382,14 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
         _write(config, method_not_allowed, sizeof(method_not_allowed) - 1));
       break;
     case TINYWOT_RESPONSE_STATUS_NOT_IMPLEMENTED:
-      RETURN_IF_FAIL(_write(config, not_implemented, sizeof(not_implemented) - 1));
+      RETURN_IF_FAIL(
+        _write(config, not_implemented, sizeof(not_implemented) - 1));
       break;
     case TINYWOT_RESPONSE_STATUS_ERROR:   // fall through
     case TINYWOT_RESPONSE_STATUS_UNKNOWN: // fall through
     default:
-      RETURN_IF_FAIL(
-        _write(config, internal_server_error, sizeof(internal_server_error) - 1));
+      RETURN_IF_FAIL(_write(config, internal_server_error,
+                            sizeof(internal_server_error) - 1));
       break;
   }
 
@@ -399,7 +400,8 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   }
 
   // Content-Type
-  RETURN_IF_FAIL(_write(config, str_content_type, sizeof(str_content_type) - 1));
+  RETURN_IF_FAIL(
+    _write(config, str_content_type, sizeof(str_content_type) - 1));
 
   switch (response->content_type) {
     case TINYWOT_CONTENT_TYPE_OCTET_STREAM:
