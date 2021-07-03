@@ -51,7 +51,7 @@ int tinywot_http_simple_extract_request_line(const char *linebuf, char *pathbuf,
   if (pathbuf_size < cursor_range + 1) {
     return 0;
   }
-  strncpy(pathbuf, cursor_start, pathbuf_size);
+  strncpy(pathbuf, cursor_start, cursor_range);
 
   cursor_start = cursor_end + 1;
 
