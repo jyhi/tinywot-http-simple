@@ -1,0 +1,43 @@
+{
+  "@context": ["https://www.w3.org/2019/wot/td/v1"],
+  "@type": ["Thing"],
+  "id": "urn:uuid:135a9cd2-aa55-4268-b1d1-e5b1a4827bb7",
+  "title": "TinyWoT Arduino LED Example",
+  "base": "http://192.168.1.11",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "security": ["nosec_sc"],
+  "properties": {
+    "led": {
+      "type": "boolean",
+      "title": "LED Status",
+      "description": "Status of the Arduino built-in LED.",
+      "forms": [
+        {
+          "href": "/led"
+        }
+      ]
+    }
+  },
+  "actions": {
+    "toggle": {
+      "title": "Toggle LED",
+      "description": "Flip the status of the Arduino built-in LED.",
+      "input": {
+        "type": "boolean"
+      },
+      "output": {
+        "type": "boolean"
+      },
+      "forms": [
+        {
+          "href": "/toggle"
+        }
+      ]
+    }
+  },
+  "events": {}
+}
