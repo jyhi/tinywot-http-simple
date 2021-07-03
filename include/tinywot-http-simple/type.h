@@ -47,31 +47,24 @@ typedef struct {
    */
   int (*readln)(char *linebuf, size_t bufsize, void *ctx);
   /**
-   * \brief Handler for writing a single line of HTTP text.
+   * \brief Handler for writing HTTP response segments.
    *
    * This platform-specific callback needs to be implemented by the Thing
-   * implementor for this project to write the outgoing HTTP response. As the
-   * name of this function suggests, each call should send the line of text,
-   * broken by the Line Feed (LF, `\n`) character, with the LF included, to e.g.
-   * a network socket. As guarantees provided by this project, the implementor
-   * may assume the following:
-   *
-   * - `linebuf` MUST NOT be NULL. However, an empty string will be passed to
-   * send the HTTP end-of-header-section sequence (a CRLF).
-   * - `linebuf` MUST be a HTTP line as well as a C string (ending with CR LF
-   * NUL (`\r\n\0`)).
+   * implementor for this project to write the outgoing HTTP response. On each
+   * call, `buf` will be filled with a string. It may be a line of HTTP header,
+   * or the content payload. Implementation of this function may assume that
+   * `buf` can never be NULL.
    *
    * Expected return values from this project are documented below.
    *
-   * \param[inout] linebuf TinyWoTHTTPSimpleConfig::linebuf, but with NUL
-   * guaranteed.
+   * \param[inout] buf Buffer containing a string to write out.
+   * \param[in] nbytes Number of bytes to write.
    * \param[inout] ctx TinyWoTHTTPSimpleConfig::ctx.
    * \return
-   * - 1 on a successful write of a line.
-   * - 0 on a successful write, but a line feed is not found.
-   * - -1 on any other failure.
+   * - 1 (non-0) on a successful write.
+   * - 0 on a failed write.
    */
-  int (*writeln)(char *linebuf, void *ctx);
+  int (*write)(const char *buf, size_t nbytes, void *ctx);
   /**
    * \brief Buffer holding lines read with #readln.
    *
