@@ -10,5 +10,6 @@ set -e
 platformio ci \
   --lib . \
   --lib ../tinywot \
+  --project-option 'lib_deps=arduino-libraries/Ethernet' \
   --board uno \
-  example/test.c
+  example/arduino-led/main.ino
