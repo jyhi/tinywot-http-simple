@@ -51,6 +51,20 @@ const char str_true[] PROGMEM = "true";
 const char str_false[] PROGMEM = "false";
 const char str_led[] PROGMEM = "/led";
 const char str_toggle[] PROGMEM = "/toggle";
+const char str_well_known_td[] PROGMEM = "/.well-known/wot-thing-description";
+const char str_td[] PROGMEM =
+  "{\"@context\":[\"https://www.w3.org/2019/wot/td/"
+  "v1\"],\"@type\":[\"Thing\"],\"id\":\"urn:uuid:135a9cd2-aa55-4268-b1d1-"
+  "e5b1a4827bb7\",\"title\":\"TinyWoT Arduino LED "
+  "Example\",\"base\":\"http://"
+  "192.168.1.11\",\"securityDefinitions\":{\"nosec_sc\":{\"scheme\":\"nosec\"}}"
+  ",\"security\":[\"nosec_sc\"],\"properties\":{\"led\":{\"type\":\"boolean\","
+  "\"title\":\"LED Status\",\"description\":\"Status of the Arduino built-in "
+  "LED.\",\"forms\":[{\"href\":\"/"
+  "led\"}]}},\"actions\":{\"toggle\":{\"title\":\"Toggle "
+  "LED\",\"description\":\"Flip the status of the Arduino built-in "
+  "LED.\",\"input\":{\"type\":\"boolean\"},\"output\":{\"type\":\"boolean\"},"
+  "\"forms\":[{\"href\":\"/toggle\"}]}},\"events\":{}}";
 
 // Forward declarations of thing implementation functions
 // Function implementations are below loop()
@@ -58,6 +72,7 @@ int readln(char *linebuf, size_t bufsize, void *ctx);
 int write(const char *buf, size_t nbytes, void *ctx);
 TinyWoTResponse handler_led(TinyWoTRequest *req, void *ctx);
 TinyWoTResponse handler_toggle(TinyWoTRequest *req, void *ctx);
+TinyWoTResponse handler_td(TinyWoTRequest *req, void *ctx);
 
 // Handlers implementing the behaviors of this Thing.
 TinyWoTHandler handlers[] = {
@@ -65,6 +80,7 @@ TinyWoTHandler handlers[] = {
    WOT_OPERATION_TYPE_READ_PROPERTY | WOT_OPERATION_TYPE_WRITE_PROPERTY,
    handler_led, NULL},
   {str_toggle, WOT_OPERATION_TYPE_INVOKE_ACTION, handler_toggle, NULL},
+  {str_well_known_td, WOT_OPERATION_TYPE_READ_PROPERTY, handler_td, NULL},
 };
 
 // The Thing.
@@ -98,7 +114,7 @@ void setup(void) {
 
 void loop(void) {
   static char linebuf[128];
-  static char pathbuf[32];
+  static char pathbuf[64];
   static TinyWoTRequest req;
   static TinyWoTResponse resp;
   static int r = 0;
@@ -122,7 +138,7 @@ void loop(void) {
     .linebuf = linebuf,
     .linebuf_size = 128,
     .pathbuf = pathbuf,
-    .pathbuf_size = 32,
+    .pathbuf_size = 64,
     .ctx = &client,
   };
 
@@ -233,6 +249,18 @@ TinyWoTResponse handler_toggle(TinyWoTRequest *req, void *ctx) {
     resp.content_length = strlen_P(str_true);
     resp.content = (void *)str_true;
   }
+
+  return resp;
+}
+
+TinyWoTResponse handler_td(TinyWoTRequest *req, void *ctx) {
+  (void)ctx;
+  TinyWoTResponse resp;
+
+  resp.status = TINYWOT_RESPONSE_STATUS_OK;
+  resp.content_type = TINYWOT_CONTENT_TYPE_JSON;
+  resp.content_length = strlen_P(str_td);
+  resp.content = (void *)str_td;
 
   return resp;
 }
