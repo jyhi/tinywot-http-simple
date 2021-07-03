@@ -185,7 +185,7 @@ static int tinywot_http_simple_extract_request_line(const char *linebuf,
 
   // Version (but only an assertion on the format)
 
-  if (_strncmp(cursor_start, _PSTR("HTTP/"), 5) != 0)
+  if (_strncmp(cursor_start, _PSTR("HTTP/1.1"), 8) != 0)
     return 0;
   cursor_end = strchr(cursor_start, '\r');
   if (!cursor_end)
