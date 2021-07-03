@@ -3,9 +3,9 @@ SPDX-FileCopyrightText: 2021 Junde Yhi <junde@yhi.moe>
 SPDX-License-Identifier: CC0-1.0
 -->
 
-# TinyWoT Simple HTTP Protocol Binding
+# TinyWoT Protocol Binding - Simple HTTP
 
-This library is a [protocol binding][pb] implementation for [TinyWoT] to transform HTTP requests into [TinyWoT] requests and [TinyWoT] responses to HTTP responses.
+This is a [protocol binding][pb] implementation for [TinyWoT] to transform HTTP requests into [TinyWoT] requests and [TinyWoT] responses into HTTP responses.
 
 [pb]: https://www.w3.org/TR/wot-binding-templates/
 [TinyWoT]: https://github.com/lmy441900/tinywot
@@ -13,21 +13,37 @@ This library is a [protocol binding][pb] implementation for [TinyWoT] to transfo
 ## Installation
 
 - [PlatformIO]: `pio lib install tinywot-http-simple`
-- More support to come...
 
 [PlatformIO]: https://platformio.org/
 
 ## Use
 
-To do.
+1. Prepare a configuration object (`TinyWoTHTTPSimpleConfig`). This include:
+  - a read line handler (`readln`)
+  - a write handler (`write`)
+  - a buffer "scratchpad" (`linebuf`) and its size (`linebuf_size`)
+  - a buffer storing the path (`pathbuf`) and its size (`pathbuf_size`)
+  - an optional context pointer (`ctx`) for the use of read / write handlers; for example, a socket
+2. Upon a network request, invoke `tinywot_http_simple_recv` with the configuration object and a pointer to `TinyWoTRequest`. The function will fill the `TinyWoTRequest` while consuming the HTTP request.
+3. After `tinywot_process`, invoke `tinywot_http_simple_send` with the configuration object and a pointer to the `TinyWoTResponse` returned. The function will emit HTTP response texts according to the `TinyWoTResponse`.
 
-### Example
+```c
+if (!tinywot_http_simple_recv(&cfg, &req)) {
+  // error handling
+}
 
-To do.
+resp = tinywot_process(&thing, &req);
+
+if (!tinywot_http_simple_send(&cfg, &resp)) {
+  // error handling
+}
+```
+
+A sample Thing implemented using this library based on Arduino with Ethernet connectivity can be found in [example/arduino-led](example/arduino-led).
 
 ## Limitations
 
-To do.
+- This library parses HTTP line-by-line, so the size of buffer (`linebuf`, as the name suggests) essentially limits the maximum possible length of a HTTP request. If a HTTP request has a line longer than the size of buffer, the receiving or the sending process will fail. It's recommended to set `linebuf_size` to a value larger than 48 (bytes).
 
 ## License
 
