@@ -42,8 +42,15 @@ EthernetServer server = EthernetServer(80);
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 IPAddress ip4(192, 168, 1, 11);
 
+// Strings stored in the program space, avaiable on AVR platforms.
+// Note that since reading them requires a special instruction, care must be
+// taken when utilizing this feature. To tell TinyWoT and TinyWoT-HTTP-Simple
+// about this, define `TINYWOT_USE_PROGMEM` and
+// `TINYWOT_HTTP_SIMPLE_USE_PROGMEM`. Otherwise, the Thing will malfunction.
 const char str_true[] PROGMEM = "true";
 const char str_false[] PROGMEM = "false";
+const char str_led[] PROGMEM = "/led";
+const char str_toggle[] PROGMEM = "/toggle";
 
 // Forward declarations of thing implementation functions
 // Function implementations are below loop()
@@ -54,10 +61,10 @@ TinyWoTResponse handler_toggle(TinyWoTRequest *req, void *ctx);
 
 // Handlers implementing the behaviors of this Thing.
 TinyWoTHandler handlers[] = {
-  {PSTR("/led"),
+  {str_led,
    WOT_OPERATION_TYPE_READ_PROPERTY | WOT_OPERATION_TYPE_WRITE_PROPERTY,
    handler_led, NULL},
-  {PSTR("/toggle"), WOT_OPERATION_TYPE_INVOKE_ACTION, handler_toggle, NULL},
+  {str_toggle, WOT_OPERATION_TYPE_INVOKE_ACTION, handler_toggle, NULL},
 };
 
 // The Thing.
