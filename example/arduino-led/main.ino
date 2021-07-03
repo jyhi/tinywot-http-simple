@@ -186,7 +186,7 @@ TinyWoTResponse handler_led(TinyWoTRequest *req, void *ctx) {
   if (req->op == WOT_OPERATION_TYPE_READ_PROPERTY) {
     int led = digitalRead(LED);
     resp.status = TINYWOT_RESPONSE_STATUS_OK;
-    resp.content_type = TINYWOT_CONTENT_TYPE_TEXT_PLAIN;
+    resp.content_type = TINYWOT_CONTENT_TYPE_JSON;
     if (led) {
       resp.content_length = strlen_P(str_true);
       resp.content = (void *)str_true;
@@ -198,13 +198,13 @@ TinyWoTResponse handler_led(TinyWoTRequest *req, void *ctx) {
     if (strcmp_P((char *)req->content, str_true) == 0) {
       digitalWrite(LED, HIGH);
       resp.status = TINYWOT_RESPONSE_STATUS_OK;
-      resp.content_type = TINYWOT_CONTENT_TYPE_TEXT_PLAIN;
+      resp.content_type = TINYWOT_CONTENT_TYPE_JSON;
       resp.content_length = strlen_P(str_true);
       resp.content = (void *)str_true;
     } else if (strcmp_P((char *)req->content, str_false) == 0) {
       digitalWrite(LED, LOW);
       resp.status = TINYWOT_RESPONSE_STATUS_OK;
-      resp.content_type = TINYWOT_CONTENT_TYPE_TEXT_PLAIN;
+      resp.content_type = TINYWOT_CONTENT_TYPE_JSON;
       resp.content_length = strlen_P(str_false);
       resp.content = (void *)str_false;
     } else {
@@ -222,7 +222,7 @@ TinyWoTResponse handler_toggle(TinyWoTRequest *req, void *ctx) {
   TinyWoTResponse resp;
 
   resp.status = TINYWOT_RESPONSE_STATUS_OK;
-  resp.content_type = TINYWOT_CONTENT_TYPE_TEXT_PLAIN;
+  resp.content_type = TINYWOT_CONTENT_TYPE_JSON;
 
   if (digitalRead(LED)) {
     digitalWrite(LED, LOW);
