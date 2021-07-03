@@ -333,65 +333,91 @@ int tinywot_http_simple_recv(TinyWoTHTTPSimpleConfig *config,
   return 1;
 }
 
+/**
+ * \internal
+ * \brief Call `config->write` to write `str` out, taking care of AVR program
+ * space (flash memory) strings.
+ *
+ * \param[inout] config A TinyWoTHTTPSimpleConfig.
+ * \param[in] str A string to write out. When `TINYWOT_HTTP_SIMPLE_USE_PROGMEM`
+ * is defined, this must point to the flash memory.
+ * \param[in] size The size of `str`. Note that this is not the length of `str`:
+ * it includes the terminating NUL.
+ * \return non-0 on success, 0 on failure.
+ */
+static int _write(TinyWoTHTTPSimpleConfig *config, const char *str,
+                  size_t size) {
+  int r = 0;
+
+#if defined(__AVR_ARCH__) && defined(TINYWOT_HTTP_SIMPLE_USE_PROGMEM)
+  size_t maxsize = config->linebuf_size < size ? config->linebuf_size : size;
+  memcpy_P(config->linebuf, str, maxsize);
+  r = config->write(config->linebuf, maxsize, config->ctx);
+#else
+  r = config->write(str, size, config->ctx);
+#endif
+
+  if (!r) {
+    return 0;
+  }
+
+  return 1;
+}
+
 int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
                              TinyWoTResponse *response) {
   // HTTP status line
   switch (response->status) {
     case TINYWOT_RESPONSE_STATUS_OK:
-      RETURN_IF_FAIL(config->write(ok, sizeof(ok), config->ctx));
+      RETURN_IF_FAIL(_write(config, ok, sizeof(ok)));
       break;
     case TINYWOT_RESPONSE_STATUS_BAD_REQUEST:
-      RETURN_IF_FAIL(
-        config->write(bad_request, sizeof(bad_request), config->ctx));
+      RETURN_IF_FAIL(_write(config, bad_request, sizeof(bad_request)));
       break;
     case TINYWOT_RESPONSE_STATUS_UNSUPPORTED:
-      RETURN_IF_FAIL(config->write(not_found, sizeof(not_found), config->ctx));
+      RETURN_IF_FAIL(_write(config, not_found, sizeof(not_found)));
       break;
     case TINYWOT_RESPONSE_STATUS_METHOD_NOT_ALLOWED:
-      RETURN_IF_FAIL(config->write(method_not_allowed,
-                                   sizeof(method_not_allowed), config->ctx));
+      RETURN_IF_FAIL(
+        _write(config, method_not_allowed, sizeof(method_not_allowed)));
       break;
     case TINYWOT_RESPONSE_STATUS_NOT_IMPLEMENTED:
-      RETURN_IF_FAIL(
-        config->write(not_implemented, sizeof(not_implemented), config->ctx));
+      RETURN_IF_FAIL(_write(config, not_implemented, sizeof(not_implemented)));
       break;
     case TINYWOT_RESPONSE_STATUS_ERROR:   // fall through
     case TINYWOT_RESPONSE_STATUS_UNKNOWN: // fall through
     default:
-      RETURN_IF_FAIL(config->write(internal_server_error,
-                                   sizeof(internal_server_error), config->ctx));
+      RETURN_IF_FAIL(
+        _write(config, internal_server_error, sizeof(internal_server_error)));
       break;
   }
 
   // If there is actually no content payload, then we stop here
   if (!response->content) {
-    RETURN_IF_FAIL(config->write(crlf, sizeof(crlf), config->ctx));
+    RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf)));
     return 1;
   }
 
   // Content-Type
-  RETURN_IF_FAIL(
-    config->write(str_content_type, sizeof(str_content_type), config->ctx));
+  RETURN_IF_FAIL(_write(config, str_content_type, sizeof(str_content_type)));
 
   switch (response->content_type) {
     case TINYWOT_CONTENT_TYPE_OCTET_STREAM:
-      RETURN_IF_FAIL(config->write(application_octet_stream,
-                                   sizeof(application_octet_stream),
-                                   config->ctx));
+      RETURN_IF_FAIL(_write(config, application_octet_stream,
+                            sizeof(application_octet_stream)));
       break;
     case TINYWOT_CONTENT_TYPE_JSON:
       RETURN_IF_FAIL(
-        config->write(application_json, sizeof(application_json), config->ctx));
+        _write(config, application_json, sizeof(application_json)));
       break;
     case TINYWOT_CONTENT_TYPE_TD_JSON:
-      RETURN_IF_FAIL(config->write(application_td_json,
-                                   sizeof(application_td_json), config->ctx));
+      RETURN_IF_FAIL(
+        _write(config, application_td_json, sizeof(application_td_json)));
       break;
     case TINYWOT_CONTENT_TYPE_TEXT_PLAIN: // fall through
     case TINYWOT_CONTENT_TYPE_UNKNOWN:    // fall through
     default:
-      RETURN_IF_FAIL(
-        config->write(text_plain, sizeof(text_plain), config->ctx));
+      RETURN_IF_FAIL(_write(config, text_plain, sizeof(text_plain)));
       break;
   }
 
@@ -399,16 +425,15 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   int nbytes = _snprintf(config->linebuf, config->linebuf_size, _PSTR("%u"),
                          response->content_length);
   RETURN_IF_FAIL(
-    config->write(str_content_length, sizeof(str_content_length), config->ctx));
+    _write(config, str_content_length, sizeof(str_content_length)));
   RETURN_IF_FAIL(config->write(config->linebuf, (size_t)nbytes, config->ctx));
-  RETURN_IF_FAIL(config->write(crlf, sizeof(crlf), config->ctx));
+  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf)));
 
   // End of header
-  RETURN_IF_FAIL(config->write(crlf, sizeof(crlf), config->ctx));
+  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf)));
 
   // Content payload
-  RETURN_IF_FAIL(
-    config->write(response->content, response->content_length, config->ctx));
+  RETURN_IF_FAIL(_write(config, response->content, response->content_length));
 
   return 1;
 }
