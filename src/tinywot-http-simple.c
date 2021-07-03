@@ -233,7 +233,7 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
 
   // If the current line consists (starts with, even) only CR and LF then we
   // indicate the over of HTTP header fields.
-  if (_strncmp(linebuf, "\r\n", 2) == 0) {
+  if (_strncmp(linebuf, crlf, sizeof(crlf)) == 0) {
     return 0;
   }
 
