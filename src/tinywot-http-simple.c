@@ -233,7 +233,7 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
 
   // If the current line consists (starts with, even) only CR and LF then we
   // indicate the over of HTTP header fields.
-  if (_strncmp(linebuf, crlf, sizeof(crlf)) == 0) {
+  if (_strncmp(linebuf, crlf, sizeof(crlf) - 1) == 0) {
     return 0;
   }
 
@@ -369,55 +369,55 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   // HTTP status line
   switch (response->status) {
     case TINYWOT_RESPONSE_STATUS_OK:
-      RETURN_IF_FAIL(_write(config, ok, sizeof(ok)));
+      RETURN_IF_FAIL(_write(config, ok, sizeof(ok) - 1));
       break;
     case TINYWOT_RESPONSE_STATUS_BAD_REQUEST:
-      RETURN_IF_FAIL(_write(config, bad_request, sizeof(bad_request)));
+      RETURN_IF_FAIL(_write(config, bad_request, sizeof(bad_request) - 1));
       break;
     case TINYWOT_RESPONSE_STATUS_UNSUPPORTED:
-      RETURN_IF_FAIL(_write(config, not_found, sizeof(not_found)));
+      RETURN_IF_FAIL(_write(config, not_found, sizeof(not_found) - 1));
       break;
     case TINYWOT_RESPONSE_STATUS_METHOD_NOT_ALLOWED:
       RETURN_IF_FAIL(
-        _write(config, method_not_allowed, sizeof(method_not_allowed)));
+        _write(config, method_not_allowed, sizeof(method_not_allowed) - 1));
       break;
     case TINYWOT_RESPONSE_STATUS_NOT_IMPLEMENTED:
-      RETURN_IF_FAIL(_write(config, not_implemented, sizeof(not_implemented)));
+      RETURN_IF_FAIL(_write(config, not_implemented, sizeof(not_implemented) - 1));
       break;
     case TINYWOT_RESPONSE_STATUS_ERROR:   // fall through
     case TINYWOT_RESPONSE_STATUS_UNKNOWN: // fall through
     default:
       RETURN_IF_FAIL(
-        _write(config, internal_server_error, sizeof(internal_server_error)));
+        _write(config, internal_server_error, sizeof(internal_server_error) - 1));
       break;
   }
 
   // If there is actually no content payload, then we stop here
   if (!response->content) {
-    RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf)));
+    RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf) - 1));
     return 1;
   }
 
   // Content-Type
-  RETURN_IF_FAIL(_write(config, str_content_type, sizeof(str_content_type)));
+  RETURN_IF_FAIL(_write(config, str_content_type, sizeof(str_content_type) - 1));
 
   switch (response->content_type) {
     case TINYWOT_CONTENT_TYPE_OCTET_STREAM:
       RETURN_IF_FAIL(_write(config, application_octet_stream,
-                            sizeof(application_octet_stream)));
+                            sizeof(application_octet_stream) - 1));
       break;
     case TINYWOT_CONTENT_TYPE_JSON:
       RETURN_IF_FAIL(
-        _write(config, application_json, sizeof(application_json)));
+        _write(config, application_json, sizeof(application_json) - 1));
       break;
     case TINYWOT_CONTENT_TYPE_TD_JSON:
       RETURN_IF_FAIL(
-        _write(config, application_td_json, sizeof(application_td_json)));
+        _write(config, application_td_json, sizeof(application_td_json) - 1));
       break;
     case TINYWOT_CONTENT_TYPE_TEXT_PLAIN: // fall through
     case TINYWOT_CONTENT_TYPE_UNKNOWN:    // fall through
     default:
-      RETURN_IF_FAIL(_write(config, text_plain, sizeof(text_plain)));
+      RETURN_IF_FAIL(_write(config, text_plain, sizeof(text_plain) - 1));
       break;
   }
 
@@ -425,12 +425,12 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   int nbytes = _snprintf(config->linebuf, config->linebuf_size, _PSTR("%u"),
                          response->content_length);
   RETURN_IF_FAIL(
-    _write(config, str_content_length, sizeof(str_content_length)));
+    _write(config, str_content_length, sizeof(str_content_length) - 1));
   RETURN_IF_FAIL(config->write(config->linebuf, (size_t)nbytes, config->ctx));
-  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf)));
+  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf) - 1));
 
   // End of header
-  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf)));
+  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf) - 1));
 
   // Content payload
   RETURN_IF_FAIL(_write(config, response->content, response->content_length));
