@@ -13,3 +13,11 @@ platformio ci \
   --project-option 'lib_deps=arduino-libraries/Ethernet' \
   --board uno \
   example/arduino-led/main.ino
+
+platformio ci \
+  --lib . \
+  --lib ../tinywot \
+  --project-option 'lib_deps=arduino-libraries/Ethernet' \
+  --project-option 'build_flags=-D TINYWOT_USE_PROGMEM -D TINYWOT_HTTP_SIMPLE_USE_PROGMEM' \
+  --board uno \
+  example/arduino-led/main.ino
