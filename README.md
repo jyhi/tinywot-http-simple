@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC0-1.0
 
 # TinyWoT Protocol Binding - Simple HTTP
 
-This is a [protocol binding][pb] implementation for [TinyWoT] to transform HTTP requests into [TinyWoT] requests and [TinyWoT] responses into HTTP responses.
+This is a _simple_ [protocol binding][pb] implementation for [TinyWoT] to transform HTTP requests into [TinyWoT] requests and [TinyWoT] responses into HTTP responses. Features include:
 
 [pb]: https://www.w3.org/TR/wot-binding-templates/
 [TinyWoT]: https://github.com/lmy441900/tinywot
@@ -14,7 +14,12 @@ This is a [protocol binding][pb] implementation for [TinyWoT] to transform HTTP 
 
 - [PlatformIO]: `pio lib install tinywot-http-simple`
 
-[PlatformIO]: https://platformio.org/
+### Dependencies
+
+- [TinyWoT] (build-time)
+- A standard C library (libc)
+
+[TinyWoT]: https://github.com/lmy441900/tinywot
 
 ## Use
 
@@ -41,9 +46,29 @@ if (!tinywot_http_simple_send(&cfg, &resp)) {
 
 A sample Thing implemented using this library based on Arduino with Ethernet connectivity can be found in [example/arduino-led](example/arduino-led).
 
+## Configuration
+
+A few macros can be defined in the build system to tweak this library:
+
+- `TINYWOT_HTTP_SIMPLE_USE_PROGMEM`: use AVR program space (flash memory) to store the HTTP strings. Toggling this helps saving around 40% of RAM that is purely used to store static HTTP strings.
+- `TINYWOT_HTTP_SIMPLE_USE_REASON_PHRASE`: append optional HTTP reason phrases in the response line of responses.
+
+For example, in [PlatformIO], insert `build_flags` in `[env]` blocks:
+
+```ini
+build_flags =
+  -DTINYWOT_HTTP_SIMPLE_USE_PROGMEM
+  -DTINYWOT_HTTP_SIMPLE_USE_REASON_PHRASE
+```
+
+For TinyWoT configuration options, see its documentation.
+
 ## Limitations
 
-- This library parses HTTP line-by-line, so the size of buffer (`linebuf`, as the name suggests) essentially limits the maximum possible length of a HTTP request. If a HTTP request has a line longer than the size of buffer, the receiving or the sending process will fail. It's recommended to set `linebuf_size` to a value larger than 48 (bytes).
+As a _"simple"_ implementation, it _just works_ and doesn't cover too many use cases.
+
+- This library parses HTTP line-by-line, so the size of buffer (`linebuf`, as the name suggests) essentially limits the maximum possible length of a HTTP request. If a HTTP request has a line longer than the size of buffer, the receiving or the sending process will fail. It's recommended to set `linebuf_size` to a value larger than 64 (bytes).
+  - The same for `pathbuf` storing the incoming path.
 
 ## License
 
@@ -55,3 +80,5 @@ This project is [REUSE 3.0][reuse] compliant: every file is carried with its own
 See the [LICENSES](LICENSES) directory for copies of licenses used across this project. The [LICENSE](LICENSE) file also contains a MIT license for non-REUSE practices.
 
 [reuse]: https://reuse.software/spec/
+
+[PlatformIO]: https://platformio.org/
