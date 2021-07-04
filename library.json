@@ -27,6 +27,6 @@
     }
   ],
   "build": {
-    "flags": ["-Iinclude/tinywot-http-simple/"]
+    "flags": "!script/version-build-flags.py"
   }
 }
