@@ -306,11 +306,9 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
     } else if (_strinequ(value_start, str_application_octet_stream,
                          value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_OCTET_STREAM;
-    } else if (_strinequ(value_start, str_application_json,
-                         value_length)) {
+    } else if (_strinequ(value_start, str_application_json, value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_JSON;
-    } else if (_strinequ(value_start, str_application_td_json,
-                         value_length)) {
+    } else if (_strinequ(value_start, str_application_td_json, value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_TD_JSON;
     } else {
       request->content_type = TINYWOT_CONTENT_TYPE_UNKNOWN;
