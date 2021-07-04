@@ -300,22 +300,22 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
   }
   value_length = value_end - value_start;
 
-  if (_strinequ(key_start, _PSTR("content-type"), key_length)) {
-    if (_strinequ(value_start, _PSTR("text/plain"), value_length)) {
+  if (_strinequ(key_start, str_content_type, key_length)) {
+    if (_strinequ(value_start, str_text_plain, value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_TEXT_PLAIN;
-    } else if (_strinequ(value_start, _PSTR("application/octet-stream"),
+    } else if (_strinequ(value_start, str_application_octet_stream,
                          value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_OCTET_STREAM;
-    } else if (_strinequ(value_start, _PSTR("application/json"),
+    } else if (_strinequ(value_start, str_application_json,
                          value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_JSON;
-    } else if (_strinequ(value_start, _PSTR("application/td+json"),
+    } else if (_strinequ(value_start, str_application_td_json,
                          value_length)) {
       request->content_type = TINYWOT_CONTENT_TYPE_TD_JSON;
     } else {
       request->content_type = TINYWOT_CONTENT_TYPE_UNKNOWN;
     }
-  } else if (_strinequ(key_start, _PSTR("content-length"), key_length)) {
+  } else if (_strinequ(key_start, str_content_length, key_length)) {
     unsigned long val = strtoul(value_start, NULL, 10);
     if (errno == ERANGE) {
       return -1;
