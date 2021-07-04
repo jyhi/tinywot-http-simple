@@ -21,12 +21,14 @@
 #include <avr/pgmspace.h>
 #define _PROGMEM PROGMEM
 #define _PSTR PSTR
+#define _strlen strlen_P
 #define _strncmp strncmp_P
 #define _strspn strspn_P
 #define _snprintf snprintf_P
 #else
 #define _PROGMEM
 #define _PSTR
+#define _strlen strlen
 #define _strncmp strncmp
 #define _strspn strspn
 #define _snprintf snprintf
@@ -266,7 +268,7 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
 
   // If the current line consists (starts with, even) only CR and LF then we
   // indicate the over of HTTP header fields.
-  if (_strncmp(linebuf, crlf, sizeof(crlf) - 1) == 0) {
+  if (_strncmp(linebuf, crlf, _strlen(crlf)) == 0) {
     return 0;
   }
 
@@ -371,61 +373,58 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   // HTTP status line
   switch (response->status) {
     case TINYWOT_RESPONSE_STATUS_OK:
-      RETURN_IF_FAIL(_write(config, ok, sizeof(ok) - 1));
+      RETURN_IF_FAIL(_write(config, ok, _strlen(ok)));
       break;
     case TINYWOT_RESPONSE_STATUS_BAD_REQUEST:
-      RETURN_IF_FAIL(_write(config, bad_request, sizeof(bad_request) - 1));
+      RETURN_IF_FAIL(_write(config, bad_request, _strlen(bad_request)));
       break;
     case TINYWOT_RESPONSE_STATUS_UNSUPPORTED:
-      RETURN_IF_FAIL(_write(config, not_found, sizeof(not_found) - 1));
+      RETURN_IF_FAIL(_write(config, not_found, _strlen(not_found)));
       break;
     case TINYWOT_RESPONSE_STATUS_METHOD_NOT_ALLOWED:
       RETURN_IF_FAIL(
-        _write(config, method_not_allowed, sizeof(method_not_allowed) - 1));
+        _write(config, method_not_allowed, _strlen(method_not_allowed)));
       break;
     case TINYWOT_RESPONSE_STATUS_NOT_IMPLEMENTED:
-      RETURN_IF_FAIL(
-        _write(config, not_implemented, sizeof(not_implemented) - 1));
+      RETURN_IF_FAIL(_write(config, not_implemented, _strlen(not_implemented)));
       break;
     case TINYWOT_RESPONSE_STATUS_ERROR:   // fall through
     case TINYWOT_RESPONSE_STATUS_UNKNOWN: // fall through
     default:
-      RETURN_IF_FAIL(_write(config, internal_server_error,
-                            sizeof(internal_server_error) - 1));
+      RETURN_IF_FAIL(
+        _write(config, internal_server_error, _strlen(internal_server_error)));
       break;
   }
 
   // CORS
-  RETURN_IF_FAIL(
-    _write(config, str_allow_origin, sizeof(str_allow_origin) - 1));
+  RETURN_IF_FAIL(_write(config, str_allow_origin, _strlen(str_allow_origin)));
 
   // If there is actually no content payload, then we stop here
   if (!response->content) {
-    RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf) - 1));
+    RETURN_IF_FAIL(_write(config, crlf, _strlen(crlf)));
     return 1;
   }
 
   // Content-Type
-  RETURN_IF_FAIL(
-    _write(config, str_content_type, sizeof(str_content_type) - 1));
+  RETURN_IF_FAIL(_write(config, str_content_type, _strlen(str_content_type)));
 
   switch (response->content_type) {
     case TINYWOT_CONTENT_TYPE_OCTET_STREAM:
       RETURN_IF_FAIL(_write(config, application_octet_stream,
-                            sizeof(application_octet_stream) - 1));
+                            _strlen(application_octet_stream)));
       break;
     case TINYWOT_CONTENT_TYPE_JSON:
       RETURN_IF_FAIL(
-        _write(config, application_json, sizeof(application_json) - 1));
+        _write(config, application_json, _strlen(application_json)));
       break;
     case TINYWOT_CONTENT_TYPE_TD_JSON:
       RETURN_IF_FAIL(
-        _write(config, application_td_json, sizeof(application_td_json) - 1));
+        _write(config, application_td_json, _strlen(application_td_json)));
       break;
     case TINYWOT_CONTENT_TYPE_TEXT_PLAIN: // fall through
     case TINYWOT_CONTENT_TYPE_UNKNOWN:    // fall through
     default:
-      RETURN_IF_FAIL(_write(config, text_plain, sizeof(text_plain) - 1));
+      RETURN_IF_FAIL(_write(config, text_plain, _strlen(text_plain)));
       break;
   }
 
@@ -433,12 +432,12 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   int nbytes = _snprintf(config->linebuf, config->linebuf_size, _PSTR("%u"),
                          response->content_length);
   RETURN_IF_FAIL(
-    _write(config, str_content_length, sizeof(str_content_length) - 1));
+    _write(config, str_content_length, _strlen(str_content_length)));
   RETURN_IF_FAIL(config->write(config->linebuf, (size_t)nbytes, config->ctx));
-  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf) - 1));
+  RETURN_IF_FAIL(_write(config, crlf, _strlen(crlf)));
 
   // End of header
-  RETURN_IF_FAIL(_write(config, crlf, sizeof(crlf) - 1));
+  RETURN_IF_FAIL(_write(config, crlf, _strlen(crlf)));
 
   // Content payload
   RETURN_IF_FAIL(_write(config, response->content, response->content_length));
