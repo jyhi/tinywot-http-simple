@@ -60,6 +60,7 @@ static const char str_crlf[] _PROGMEM = "\r\n";
 static const char str_get[] _PROGMEM = "GET";
 static const char str_put[] _PROGMEM = "PUT";
 static const char str_post[] _PROGMEM = "POST";
+static const char str_options[] _PROGMEM = "OPTIONS";
 
 static const char str_ok[] _PROGMEM =
   "HTTP/1.1 200 " HTTP_REASON_PHRASE_OK "\r\n";
@@ -79,8 +80,12 @@ static const char str_not_implemented[] _PROGMEM =
 static const char str_allow[] _PROGMEM = "Allow: ";
 static const char str_content_type[] _PROGMEM = "Content-Type: ";
 static const char str_content_length[] _PROGMEM = "Content-Length: ";
+static const char str_allow_methods[] _PROGMEM =
+  "Access-Control-Allow-Methods: ";
 static const char str_allow_origin[] _PROGMEM =
   "Access-Control-Allow-Origin: *\r\n";
+static const char str_allow_headers[] _PROGMEM =
+  "Access-Control-Allow-Headers: Content-Type\r\n";
 
 static const char str_text_plain[] _PROGMEM = "text/plain\r\n";
 static const char str_application_octet_stream[] _PROGMEM =
@@ -168,6 +173,43 @@ static int _write(TinyWoTHTTPSimpleConfig *config, const char *str,
 }
 
 /**
+ * \brief Send a list of allowed methods based on `response->allow`.
+ *
+ * \param[in] config Configuration.
+ * \param[inout] response The TinyWoT response representation.
+ * \return non-0 on success, 0 on failure.
+ */
+static int _send_allowed_method_list(TinyWoTHTTPSimpleConfig *config,
+                                     TinyWoTResponse *response) {
+  bool comma = false;
+
+  if (response->allow & WOT_OPERATION_TYPE_READ_PROPERTY) {
+    comma = true;
+    RETURN_IF_FAIL(_write(config, str_get, _strlen(str_get)));
+  }
+
+  if (response->allow & WOT_OPERATION_TYPE_WRITE_PROPERTY) {
+    if (comma) {
+      RETURN_IF_FAIL(_write(config, _PSTR(", "), 2));
+    } else {
+      comma = true;
+    }
+    RETURN_IF_FAIL(_write(config, str_put, _strlen(str_put)));
+  }
+
+  if (response->allow & WOT_OPERATION_TYPE_INVOKE_ACTION) {
+    if (comma) {
+      RETURN_IF_FAIL(_write(config, _PSTR(", "), 2));
+    } else {
+      comma = true;
+    }
+    RETURN_IF_FAIL(_write(config, str_post, _strlen(str_post)));
+  }
+
+  return 1;
+}
+
+/**
  * \internal
  * \brief Extract useful information from a HTTP request line.
  *
@@ -209,6 +251,8 @@ static int tinywot_http_simple_extract_request_line(const char *linebuf,
     request->op = WOT_OPERATION_TYPE_WRITE_PROPERTY;
   } else if (_strncmp(cursor_start, str_post, cursor_range) == 0) {
     request->op = WOT_OPERATION_TYPE_INVOKE_ACTION;
+  } else if (_strncmp(cursor_start, str_options, cursor_range) == 0) {
+    request->op = TINYWOT_OPERATION_TYPE_OPTIONS;
   } else {
     return 0;
   }
@@ -413,36 +457,18 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
 
   // CORS
   RETURN_IF_FAIL(_write(config, str_allow_origin, _strlen(str_allow_origin)));
+  RETURN_IF_FAIL(_write(config, str_allow_headers, _strlen(str_allow_headers)));
+  if (response->allow) {
+    RETURN_IF_FAIL(
+      _write(config, str_allow_methods, _strlen(str_allow_methods)));
+    RETURN_IF_FAIL(_send_allowed_method_list(config, response));
+    RETURN_IF_FAIL(_write(config, str_crlf, _strlen(str_crlf)));
+  }
 
   // Allow (on 405)
   if (response->status == TINYWOT_RESPONSE_STATUS_METHOD_NOT_ALLOWED) {
-    bool comma = false;
-
     RETURN_IF_FAIL(_write(config, str_allow, _strlen(str_allow)));
-
-    if (response->allow & WOT_OPERATION_TYPE_READ_PROPERTY) {
-      comma = true;
-      RETURN_IF_FAIL(_write(config, str_get, _strlen(str_get)));
-    }
-
-    if (response->allow & WOT_OPERATION_TYPE_WRITE_PROPERTY) {
-      if (comma) {
-        RETURN_IF_FAIL(_write(config, _PSTR(", "), 2));
-      } else {
-        comma = true;
-      }
-      RETURN_IF_FAIL(_write(config, str_put, _strlen(str_put)));
-    }
-
-    if (response->allow & WOT_OPERATION_TYPE_INVOKE_ACTION) {
-      if (comma) {
-        RETURN_IF_FAIL(_write(config, _PSTR(", "), 2));
-      } else {
-        comma = true;
-      }
-      RETURN_IF_FAIL(_write(config, str_post, _strlen(str_post)));
-    }
-
+    RETURN_IF_FAIL(_send_allowed_method_list(config, response));
     RETURN_IF_FAIL(_write(config, str_crlf, _strlen(str_crlf)));
   }
 
