@@ -54,20 +54,21 @@
 #define HTTP_REASON_PHRASE_NOT_IMPLEMENTED ""
 #endif
 
-static const char crlf[] _PROGMEM = "\r\n";
+static const char str_crlf[] _PROGMEM = "\r\n";
 
-static const char ok[] _PROGMEM = "HTTP/1.1 200 " HTTP_REASON_PHRASE_OK "\r\n";
-static const char no_content[] _PROGMEM =
+static const char str_ok[] _PROGMEM =
+  "HTTP/1.1 200 " HTTP_REASON_PHRASE_OK "\r\n";
+static const char str_no_content[] _PROGMEM =
   "HTTP/1.1 204 " HTTP_REASON_PHRASE_NO_CONTENT "\r\n";
-static const char bad_request[] _PROGMEM =
+static const char str_bad_request[] _PROGMEM =
   "HTTP/1.1 400 " HTTP_REASON_PHRASE_BAD_REQUEST "\r\n";
-static const char not_found[] _PROGMEM =
+static const char str_not_found[] _PROGMEM =
   "HTTP/1.1 404 " HTTP_REASON_PHRASE_NOT_FOUND "\r\n";
-static const char method_not_allowed[] _PROGMEM =
+static const char str_method_not_allowed[] _PROGMEM =
   "HTTP/1.1 405 " HTTP_REASON_PHRASE_METHOD_NOT_ALLOWED "\r\n";
-static const char internal_server_error[] _PROGMEM =
+static const char str_internal_server_error[] _PROGMEM =
   "HTTP/1.1 500 " HTTP_REASON_PHRASE_INTERNAL_SERVER_ERROR "\r\n";
-static const char not_implemented[] _PROGMEM =
+static const char str_not_implemented[] _PROGMEM =
   "HTTP/1.1 501 " HTTP_REASON_PHRASE_NOT_IMPLEMENTED "\r\n";
 
 static const char str_content_type[] _PROGMEM = "Content-Type: ";
@@ -75,11 +76,12 @@ static const char str_content_length[] _PROGMEM = "Content-Length: ";
 static const char str_allow_origin[] _PROGMEM =
   "Access-Control-Allow-Origin: *\r\n";
 
-static const char text_plain[] _PROGMEM = "text/plain\r\n";
-static const char application_octet_stream[] _PROGMEM =
+static const char str_text_plain[] _PROGMEM = "text/plain\r\n";
+static const char str_application_octet_stream[] _PROGMEM =
   "application/octet-stream\r\n";
-static const char application_json[] _PROGMEM = "application/json\r\n";
-static const char application_td_json[] _PROGMEM = "application/td+json\r\n";
+static const char str_application_json[] _PROGMEM = "application/json\r\n";
+static const char str_application_td_json[] _PROGMEM =
+  "application/td+json\r\n";
 
 //////////////////// Private APIs ////////////////////
 
@@ -272,7 +274,7 @@ static int tinywot_http_simple_extract_header_field(const char *linebuf,
 
   // If the current line consists (starts with, even) only CR and LF then we
   // indicate the over of HTTP header fields.
-  if (_strncmp(linebuf, crlf, _strlen(crlf)) == 0) {
+  if (_strncmp(linebuf, str_crlf, _strlen(str_crlf)) == 0) {
     return 0;
   }
 
@@ -378,29 +380,30 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   switch (response->status) {
     case TINYWOT_RESPONSE_STATUS_OK:
       if (response->content) {
-        RETURN_IF_FAIL(_write(config, ok, _strlen(ok)));
+        RETURN_IF_FAIL(_write(config, str_ok, _strlen(str_ok)));
       } else {
-        RETURN_IF_FAIL(_write(config, no_content, _strlen(no_content)));
+        RETURN_IF_FAIL(_write(config, str_no_content, _strlen(str_no_content)));
       }
       break;
     case TINYWOT_RESPONSE_STATUS_BAD_REQUEST:
-      RETURN_IF_FAIL(_write(config, bad_request, _strlen(bad_request)));
+      RETURN_IF_FAIL(_write(config, str_bad_request, _strlen(str_bad_request)));
       break;
     case TINYWOT_RESPONSE_STATUS_UNSUPPORTED:
-      RETURN_IF_FAIL(_write(config, not_found, _strlen(not_found)));
+      RETURN_IF_FAIL(_write(config, str_not_found, _strlen(str_not_found)));
       break;
     case TINYWOT_RESPONSE_STATUS_METHOD_NOT_ALLOWED:
-      RETURN_IF_FAIL(
-        _write(config, method_not_allowed, _strlen(method_not_allowed)));
+      RETURN_IF_FAIL(_write(config, str_method_not_allowed,
+                            _strlen(str_method_not_allowed)));
       break;
     case TINYWOT_RESPONSE_STATUS_NOT_IMPLEMENTED:
-      RETURN_IF_FAIL(_write(config, not_implemented, _strlen(not_implemented)));
+      RETURN_IF_FAIL(
+        _write(config, str_not_implemented, _strlen(str_not_implemented)));
       break;
     case TINYWOT_RESPONSE_STATUS_ERROR:   // fall through
     case TINYWOT_RESPONSE_STATUS_UNKNOWN: // fall through
     default:
-      RETURN_IF_FAIL(
-        _write(config, internal_server_error, _strlen(internal_server_error)));
+      RETURN_IF_FAIL(_write(config, str_internal_server_error,
+                            _strlen(str_internal_server_error)));
       break;
   }
 
@@ -409,7 +412,7 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
 
   // If there is actually no content payload, then we stop here
   if (!response->content) {
-    RETURN_IF_FAIL(_write(config, crlf, _strlen(crlf)));
+    RETURN_IF_FAIL(_write(config, str_crlf, _strlen(str_crlf)));
     return 1;
   }
 
@@ -418,21 +421,21 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
 
   switch (response->content_type) {
     case TINYWOT_CONTENT_TYPE_OCTET_STREAM:
-      RETURN_IF_FAIL(_write(config, application_octet_stream,
-                            _strlen(application_octet_stream)));
+      RETURN_IF_FAIL(_write(config, str_application_octet_stream,
+                            _strlen(str_application_octet_stream)));
       break;
     case TINYWOT_CONTENT_TYPE_JSON:
       RETURN_IF_FAIL(
-        _write(config, application_json, _strlen(application_json)));
+        _write(config, str_application_json, _strlen(str_application_json)));
       break;
     case TINYWOT_CONTENT_TYPE_TD_JSON:
-      RETURN_IF_FAIL(
-        _write(config, application_td_json, _strlen(application_td_json)));
+      RETURN_IF_FAIL(_write(config, str_application_td_json,
+                            _strlen(str_application_td_json)));
       break;
     case TINYWOT_CONTENT_TYPE_TEXT_PLAIN: // fall through
     case TINYWOT_CONTENT_TYPE_UNKNOWN:    // fall through
     default:
-      RETURN_IF_FAIL(_write(config, text_plain, _strlen(text_plain)));
+      RETURN_IF_FAIL(_write(config, str_text_plain, _strlen(str_text_plain)));
       break;
   }
 
@@ -442,10 +445,10 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   RETURN_IF_FAIL(
     _write(config, str_content_length, _strlen(str_content_length)));
   RETURN_IF_FAIL(config->write(config->linebuf, (size_t)nbytes, config->ctx));
-  RETURN_IF_FAIL(_write(config, crlf, _strlen(crlf)));
+  RETURN_IF_FAIL(_write(config, str_crlf, _strlen(str_crlf)));
 
   // End of header
-  RETURN_IF_FAIL(_write(config, crlf, _strlen(crlf)));
+  RETURN_IF_FAIL(_write(config, str_crlf, _strlen(str_crlf)));
 
   // Content payload
   RETURN_IF_FAIL(_write(config, response->content, response->content_length));
