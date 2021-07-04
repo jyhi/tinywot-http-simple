@@ -38,6 +38,7 @@
 
 #ifdef TINYWOT_HTTP_SIMPLE_USE_REASON_PHRASE
 #define HTTP_REASON_PHRASE_OK "OK"
+#define HTTP_REASON_PHRASE_NO_CONTENT "No Content"
 #define HTTP_REASON_PHRASE_BAD_REQUEST "Bad Request"
 #define HTTP_REASON_PHRASE_NOT_FOUND "Not Found"
 #define HTTP_REASON_PHRASE_METHOD_NOT_ALLOWED "Method Not Allowed"
@@ -45,6 +46,7 @@
 #define HTTP_REASON_PHRASE_NOT_IMPLEMENTED "Not Implemented"
 #else
 #define HTTP_REASON_PHRASE_OK ""
+#define HTTP_REASON_PHRASE_NO_CONTENT ""
 #define HTTP_REASON_PHRASE_BAD_REQUEST ""
 #define HTTP_REASON_PHRASE_NOT_FOUND ""
 #define HTTP_REASON_PHRASE_METHOD_NOT_ALLOWED ""
@@ -55,6 +57,8 @@
 static const char crlf[] _PROGMEM = "\r\n";
 
 static const char ok[] _PROGMEM = "HTTP/1.1 200 " HTTP_REASON_PHRASE_OK "\r\n";
+static const char no_content[] _PROGMEM =
+  "HTTP/1.1 204 " HTTP_REASON_PHRASE_NO_CONTENT "\r\n";
 static const char bad_request[] _PROGMEM =
   "HTTP/1.1 400 " HTTP_REASON_PHRASE_BAD_REQUEST "\r\n";
 static const char not_found[] _PROGMEM =
@@ -373,7 +377,11 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   // HTTP status line
   switch (response->status) {
     case TINYWOT_RESPONSE_STATUS_OK:
-      RETURN_IF_FAIL(_write(config, ok, _strlen(ok)));
+      if (response->content) {
+        RETURN_IF_FAIL(_write(config, ok, _strlen(ok)));
+      } else {
+        RETURN_IF_FAIL(_write(config, no_content, _strlen(no_content)));
+      }
       break;
     case TINYWOT_RESPONSE_STATUS_BAD_REQUEST:
       RETURN_IF_FAIL(_write(config, bad_request, _strlen(bad_request)));
