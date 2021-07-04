@@ -1,34 +1,5 @@
-/*
- * An example Web Thing exposing a LED via HTTP on Arduino using TinyWoT,
- * TinyWoT-HTTP-Simple, and Ethernet.
- *
- * The following resources are available in this example:
- *
- * - `/led`: the Arduino built-in LED; property; read-write.
- * - `/toggle`: flip the status of LED; action.
- *
- * To read a property, send a GET. To write a property, send a PUT. To invoke
- * an action, send a POST. For example, assuming the LED is off, to turn it on,
- * either send:
- *
- * ```
- * PUT /led HTTP/1.1
- * Content-Type: text/plain
- * Content-Length: 4
- *
- * true
- * ```
- *
- * ... or send:
- *
- * ```
- * POST /toggle HTTP/1.1
- *
- * ```
- *
- * SPDX-FileCopyrightText: 2021 Junde Yhi <junde@yhi.moe>
- * SPDX-License-Identifier: MIT
- */
+// SPDX-FileCopyrightText: 2021 Junde Yhi <junde@yhi.moe>
+// SPDX-License-Identifier: MIT
 
 #include <Ethernet.h>
 #include <tinywot-http-simple.h>
@@ -42,7 +13,7 @@ EthernetServer server = EthernetServer(80);
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 IPAddress ip4(192, 168, 1, 11);
 
-// Strings stored in the program space, avaiable on AVR platforms.
+// Strings stored in the program space, available on AVR platforms.
 // Note that since reading them requires a special instruction, care must be
 // taken when utilizing this feature. To tell TinyWoT and TinyWoT-HTTP-Simple
 // about this, define `TINYWOT_USE_PROGMEM` and
