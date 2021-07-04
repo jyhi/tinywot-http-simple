@@ -87,6 +87,9 @@ static const char str_allow_origin[] _PROGMEM =
 static const char str_allow_headers[] _PROGMEM =
   "Access-Control-Allow-Headers: Content-Type\r\n";
 static const char str_conn_close[] _PROGMEM = "Connection: close\r\n";
+static const char str_server[] _PROGMEM =
+  "Server: TinyWoT-HTTP-Simple/" TINYWOT_HTTP_SIMPLE_VERSION
+  " (TinyWoT/" TINYWOT_VERSION ")\r\n";
 
 static const char str_text_plain[] _PROGMEM = "text/plain\r\n";
 static const char str_application_octet_stream[] _PROGMEM =
@@ -475,6 +478,9 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
 
   // Connection: close (can keep-alive be implemented?)
   RETURN_IF_FAIL(_write(config, str_conn_close, _strlen(str_conn_close)));
+
+  // Server versioning info
+  RETURN_IF_FAIL(_write(config, str_server, _strlen(str_server)));
 
   // If there is actually no content payload, then we stop here
   if (!response->content) {
