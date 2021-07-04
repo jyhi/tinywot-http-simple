@@ -123,6 +123,37 @@ static int _strinequ(const char *s1, const char *s2, size_t count) {
 
 /**
  * \internal
+ * \brief Call `config->write` to write `str` out, taking care of AVR program
+ * space (flash memory) strings.
+ *
+ * \param[inout] config A TinyWoTHTTPSimpleConfig.
+ * \param[in] str A string to write out. When `TINYWOT_HTTP_SIMPLE_USE_PROGMEM`
+ * is defined, this must point to the flash memory.
+ * \param[in] size The size of `str`. Note that this is not the length of `str`:
+ * it includes the terminating NUL.
+ * \return non-0 on success, 0 on failure.
+ */
+static int _write(TinyWoTHTTPSimpleConfig *config, const char *str,
+                  size_t size) {
+  int r = 0;
+
+#if defined(__AVR_ARCH__) && defined(TINYWOT_HTTP_SIMPLE_USE_PROGMEM)
+  size_t maxsize = config->linebuf_size < size ? config->linebuf_size : size;
+  memcpy_P(config->linebuf, str, maxsize);
+  r = config->write(config->linebuf, maxsize, config->ctx);
+#else
+  r = config->write(str, size, config->ctx);
+#endif
+
+  if (!r) {
+    return 0;
+  }
+
+  return 1;
+}
+
+/**
+ * \internal
  * \brief Extract useful information from a HTTP request line.
  *
  * `linebuf` should be a string of HTTP request line. For example:
@@ -330,37 +361,6 @@ int tinywot_http_simple_recv(TinyWoTHTTPSimpleConfig *config,
     return 0;
   }
   request->content = config->linebuf;
-
-  return 1;
-}
-
-/**
- * \internal
- * \brief Call `config->write` to write `str` out, taking care of AVR program
- * space (flash memory) strings.
- *
- * \param[inout] config A TinyWoTHTTPSimpleConfig.
- * \param[in] str A string to write out. When `TINYWOT_HTTP_SIMPLE_USE_PROGMEM`
- * is defined, this must point to the flash memory.
- * \param[in] size The size of `str`. Note that this is not the length of `str`:
- * it includes the terminating NUL.
- * \return non-0 on success, 0 on failure.
- */
-static int _write(TinyWoTHTTPSimpleConfig *config, const char *str,
-                  size_t size) {
-  int r = 0;
-
-#if defined(__AVR_ARCH__) && defined(TINYWOT_HTTP_SIMPLE_USE_PROGMEM)
-  size_t maxsize = config->linebuf_size < size ? config->linebuf_size : size;
-  memcpy_P(config->linebuf, str, maxsize);
-  r = config->write(config->linebuf, maxsize, config->ctx);
-#else
-  r = config->write(str, size, config->ctx);
-#endif
-
-  if (!r) {
-    return 0;
-  }
 
   return 1;
 }
