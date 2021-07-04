@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 Junde Yhi <junde@yhi.moe>
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Arduino LED
 
 An example Web Thing exposing a LED via HTTP on Arduino using [TinyWoT], [TinyWoT-HTTP-Simple], and [Ethernet].
