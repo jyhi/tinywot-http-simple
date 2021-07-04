@@ -66,7 +66,8 @@ static const char not_implemented[] _PROGMEM =
 
 static const char str_content_type[] _PROGMEM = "Content-Type: ";
 static const char str_content_length[] _PROGMEM = "Content-Length: ";
-static const char str_cors[] _PROGMEM = "Access-Control-Allow-Origin: *\r\n";
+static const char str_allow_origin[] _PROGMEM =
+  "Access-Control-Allow-Origin: *\r\n";
 
 static const char text_plain[] _PROGMEM = "text/plain\r\n";
 static const char application_octet_stream[] _PROGMEM =
@@ -395,7 +396,8 @@ int tinywot_http_simple_send(TinyWoTHTTPSimpleConfig *config,
   }
 
   // CORS
-  RETURN_IF_FAIL(_write(config, str_cors, sizeof(str_cors) - 1));
+  RETURN_IF_FAIL(
+    _write(config, str_allow_origin, sizeof(str_allow_origin) - 1));
 
   // If there is actually no content payload, then we stop here
   if (!response->content) {
